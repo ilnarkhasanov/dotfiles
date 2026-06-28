@@ -1,0 +1,85 @@
+set tabstop=4
+set shiftwidth=4
+set expandtab
+set clipboard+=unnamedplus
+set number relativenumber
+
+call plug#begin('~/.local/share/nvim/plugged')
+
+Plug 'nvim-tree/nvim-tree.lua'
+
+Plug 'nvim-telescope/telescope.nvim', {'do': ':UpdateRemotePlugins'}
+Plug 'nvim-telescope/telescope-fzf-native.nvim', { 'do': 'make' }
+
+Plug 'nvim-lua/plenary.nvim'
+Plug 'nvim-telescope/telescope-file-browser.nvim'
+Plug 'neovim/nvim-lspconfig' " LSP configurations
+Plug 'tpope/vim-commentary'
+Plug 'ThePrimeagen/vim-be-good'
+
+Plug 'iamcco/markdown-preview.nvim', { 'do': 'cd app && npx --yes yarn install' }
+
+" Autocomplete
+Plug 'hrsh7th/nvim-cmp'
+Plug 'hrsh7th/cmp-nvim-lsp'
+Plug 'hrsh7th/cmp-buffer'
+Plug 'hrsh7th/cmp-path'
+" follow latest release and install jsregexp.
+Plug 'L3MON4D3/LuaSnip', {'tag': 'v2.*', 'do': 'make install_jsregexp'} " Replace <CurrentMajor> by the latest released major (first number of latest release)
+
+" Telescope bindings
+nnoremap ,ff <cmd>Telescope find_files<cr>
+nnoremap ,fg <cmd>Telescope live_grep<cr>
+
+call plug#end()
+
+lua << EOF
+
+-- Key mappings
+vim.api.nvim_set_keymap('n', 'gd', '<cmd>lua vim.lsp.buf.definition()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', 'K', '<cmd>lua vim.lsp.buf.hover()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<leader>rn', '<cmd>lua vim.lsp.buf.rename()<CR>', { noremap = true, silent = true })
+
+vim.keymap.set("n", "gr", vim.lsp.buf.references)
+
+vim.diagnostic.config({
+  virtual_text = {
+    prefix = '●', -- or '■', '▎', '', etc.
+    spacing = 4,
+  },
+  signs = true,
+  underline = true,
+  update_in_insert = false,
+  severity_sort = true,
+})
+
+vim.o.autoread = true
+
+require('nvim-tree').setup {}
+require('telescope').load_extension('file_browser')
+require('lspconfig').pyright.setup{}
+
+local cmp = require("cmp")
+
+cmp.setup({
+  snippet = {
+    expand = function(args)
+      require("luasnip").lsp_expand(args.body)
+    end,
+  },
+  mapping = cmp.mapping.preset.insert({
+    ["<Tab>"] = cmp.mapping.select_next_item(),
+    ["<S-Tab>"] = cmp.mapping.select_prev_item(),
+    ["<CR>"] = cmp.mapping.confirm({ select = true }),
+  }),
+  sources = {
+    { name = "nvim_lsp" },
+    { name = "buffer" },
+    { name = "path" },
+  },
+})
+
+EOF
+
+nnoremap <leader>fb :Telescope file_browser<CR>
+
